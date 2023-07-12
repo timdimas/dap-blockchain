@@ -2,6 +2,7 @@
     "name": "dap-blockchain",
     "private": true,
     "version": "0.0.0",
+    "homepage": "https://timdimas.github.io/dap-blockchain/",
     "type": "module",
     "scripts": {
         "dev": "vite",
