@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
-//Το abi του smart contract που θα χρησιμοποιήσουμε το αποθηκεύουμε σε ένα αρχείο
+//Το abi του smart contract που θα χρησιμοποιήσουμε το αποθηκεύουμε σε ένα αρχείo
 import abi from "./Credentials";
 
 function App() {
