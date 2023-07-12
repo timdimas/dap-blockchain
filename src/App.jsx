@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
+//Το abi του smart contract που θα χρησιμοποιήσουμε το αποθηκεύουμε σε ένα αρχείο
 import abi from "./Credentials";
 
 function App() {
-    const contractAddress = "0xc89e99cbbe432660c521501d90eb8ff8f406a4d8";
+    //Το contract address του smart contract που θα χρησιμοποιήσουμε
+    const contractAddress = "0x36c864606820dffa214056cd23534ff0dc1215e4";
 
     const [provider, setProvider] = useState(null);
     // const [contract, setContract] = useState(null);
 
+    //Τα state variables που θα χρησιμοποιήσουμε για να ενημερώνουμε το UI
     const [carBid, setCarBid] = useState(1);
     const [phoneBid, setPhoneBid] = useState(0);
     const [computerBid, setComputerBid] = useState(0);
+
     const [totalEtherBalance, setTotalEtherBalance] = useState(0);
     const [account, setAccount] = useState();
     const [owner, setOwner] = useState();
@@ -21,6 +25,7 @@ function App() {
     const [ticketPurchasedEvents, setTicketPurchasedEvents] = useState([]);
 
     useEffect(() => {
+        //Συνάρτηση που καλείται μόλις φορτώσει το component που κάνει connect το wallet του χρήστη
         async function connectToMetaMask() {
             await connectWallet();
             await getObjectNames();
@@ -35,13 +40,16 @@ function App() {
         return () => clearInterval(interval);
     }, []);
 
+    //Συνάρτηση που καλείται μόλις φορτώσει το component που κάνει initialize το contract
     async function initializeContract() {
         if (window.ethereum) {
+            //Συνδεόμαστε στο contract
             await window.ethereum.enable();
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const signer = provider.getSigner();
             const contract = new ethers.Contract(contractAddress, abi, signer);
             if (contract) {
+                //Ακούμε τα events που εκπέμπει το contract και καλούμε την αντίστοιχη συνάρτηση
                 contract.on("TicketPurchased", handleTicketPurchased);
                 contract.on(
                     "WinnersDeclared",
@@ -53,8 +61,11 @@ function App() {
         }
     }
 
+    //Συνάρτηση που καλείται όταν ο χρήστης πατήσει το κουμπί "connect wallet" και αγοραστεί το ticket
     const handleTicketPurchased = (buyer, itemName, quantity, event) => {
         // Update the state variable with the event data
+        //Ενημερώνουμε τα state variables με τα στοιχεία του event
+        //το οποίο περιέχει το όνομα του αγοραστή, το όνομα του αντικειμένου και την ποσότητα που αγόρασε και το transaction hash
         setTicketPurchasedEvents((prevEvents) => [
             ...prevEvents,
             {
@@ -66,7 +77,9 @@ function App() {
         ]);
     };
 
+    //Συνάρτηση που καλείται όταν ο χρήστης πατήσει το κουμπί "start new cycle"
     async function handleStartNewCycle() {
+        //Συνδεόμαστε στο contract
         const accounts = await window.ethereum.request({
             method: "eth_requestAccounts",
         });
@@ -79,6 +92,7 @@ function App() {
         );
         if (contract) {
             try {
+                //Καλούμε την startNewCycle συνάρτηση του contract
                 const transaction = await contract.startNewCycle();
                 await transaction.wait();
                 alert("New cycle started");
@@ -88,8 +102,9 @@ function App() {
             }
         }
     }
-
+    //Συνάρτηση που ενημερώνει τα state variables με τα ονόματα των αντικειμένων και το πλήθος των bids που έχουν γίνει
     async function getObjectNames() {
+        //Συνδεόμαστε στο contract
         const accounts = await window.ethereum.request({
             method: "eth_requestAccounts",
         });
@@ -101,6 +116,7 @@ function App() {
             abi,
             provider.getSigner()
         );
+        //Παίρνουμε το πλήθος των bids που έχουν γίνει για κάθε αντικείμενο απο το smart contract
         const carB = await contract.carTicketsSold();
         const phoneB = await contract.phoneTicketsSold();
         const computerB = await contract.computerTicketsSold();
@@ -109,7 +125,7 @@ function App() {
         setPhoneBid(phoneB.toNumber());
         setComputerBid(computerB.toNumber());
     }
-
+    //Συνάρτηση που καλείται όταν ο χρήστης πατήσει το κουμπί "Connect Wallet"
     const connectWallet = async () => {
         if (window.ethereum) {
             try {
@@ -137,8 +153,9 @@ function App() {
             }
         }
     };
-
+    //Συνάρτηση που καλείται όταν ο χρήστης πατήσει το κουμπί "Bid"
     const handleBid = async (itemName) => {
+        //Συνδεόμαστε στο contract
         try {
             const accounts = await window.ethereum.request({
                 method: "eth_requestAccounts",
@@ -151,7 +168,7 @@ function App() {
                 abi,
                 provider.getSigner()
             );
-
+            //Παίρνει 0.01 ether από τον χρήστη και το στέλνει στο contract
             const bidTransaction = await contract.buyTickets(itemName, 1, {
                 value: ethers.utils.parseEther("0.01"),
                 gasLimit: 300000,
@@ -174,8 +191,9 @@ function App() {
             console.log("bid failed", error);
         }
     };
-
+    //Συνάρτηση που καλείται όταν ο χρήστης πατήσει το κουμπί "Declare Winners"
     async function declareWinners() {
+        //Συνδεόμαστε στο contract
         const accounts = await window.ethereum.request({
             method: "eth_requestAccounts",
         });
@@ -186,7 +204,7 @@ function App() {
             abi,
             provider.getSigner()
         );
-
+        //Τρέχει την declareWinners στο contract
         if (contract) {
             try {
                 const transaction = await contract.declareWinners({
@@ -211,7 +229,7 @@ function App() {
             }
         }
     }
-
+    //Συνάρτηση που καλείται όταν ο χρήστης πατήσει το κουμπί "Check Winning Items"
     async function checkWinningItems() {
         const accounts = await window.ethereum.request({
             method: "eth_requestAccounts",
@@ -232,7 +250,9 @@ function App() {
         console.log("Winning Items:", winningItems);
     }
 
+    //Συνάρτηση που καλείται όταν ο χρήστης πατήσει το κουμπί "Withdraw"
     async function handleWithdraw() {
+        //Συνδεόμαστε στο contract
         const accounts = await window.ethereum.request({
             method: "eth_requestAccounts",
         });
@@ -243,6 +263,7 @@ function App() {
             abi,
             provider.getSigner()
         );
+        //Τρέχει την withdraw στο contract
         if (contract) {
             try {
                 const transaction = await contract.withdraw();
@@ -255,6 +276,7 @@ function App() {
         }
     }
 
+    //Συνάρτηση που καλείται όταν ο χρήστης πατήσει το κουμπί "Transfer Ownership"
     async function handleTransferOwnership() {
         const accounts = await window.ethereum.request({
             method: "eth_requestAccounts",
@@ -278,7 +300,9 @@ function App() {
         }
     }
 
+    //Συνάρτηση που καλείται όταν ο χρήστης πατήσει το κουμπί "Destroy Contract"
     async function handleDestroyContract() {
+        //Συνδεόμαστε στο contract
         const accounts = await window.ethereum.request({
             method: "eth_requestAccounts",
         });
@@ -291,6 +315,7 @@ function App() {
         );
         if (contract) {
             try {
+                //Τρέχει την destroyContract στο contract
                 const transaction = await contract.destroyContract();
                 await transaction.wait();
                 alert("Contract destroyed successfully");
